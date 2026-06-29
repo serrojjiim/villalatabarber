@@ -65,6 +65,15 @@ export function useAgenda() {
   const agendarCita = async (fecha: string, hora: string, cliente: string) => {
     if (!session?.user?.id) return false;
     
+    const fechaSeleccionada = new Date(fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0); // Reseteamos la hora para comparar solo el día
+    
+    if (fechaSeleccionada < hoy) {
+      toast.error('No se pueden agendar citas en días pasados');
+      return false;
+    }
+
     // Evitar solapamientos (Validación extra de seguridad)
     if (citas.some((c) => c.fecha === fecha && c.hora === hora)) {
       toast.error('Ese hueco ya está ocupado');
@@ -103,6 +112,15 @@ export function useAgenda() {
 
   const toggleDiaCerrado = async (fecha: string) => {
     if (!session?.user?.id) return;
+    
+    const fechaSeleccionada = new Date(fecha);
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    
+    if (fechaSeleccionada < hoy) {
+      toast.error('No puedes modificar el estado de un día pasado');
+      return;
+    }
     
     const estaCerrado = diasCerrados.includes(fecha);
     try {

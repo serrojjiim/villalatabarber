@@ -44,6 +44,10 @@ export default function AgendaDiaria({
   const diasEnMes = new Date(anyo, mes + 1, 0).getDate();
   const primerDiaSemana = (new Date(anyo, mes, 1).getDay() + 6) % 7;
 
+  // Fecha de HOY normalizada a las 00:00:00 para comparar el pasado
+  const hoy = new Date();
+  hoy.setHours(0, 0, 0, 0);
+
   // Lógica de fechas y huecos
   const fechaLocal = new Date(
     diaSeleccionado.getTime() - diaSeleccionado.getTimezoneOffset() * 60000
@@ -53,6 +57,10 @@ export default function AgendaDiaria({
   const citasDelDia = citas.filter(
     (c: any) => c.fecha === fechaSeleccionadaString
   );
+
+  // Verificamos si el día que estamos visualizando en el panel derecho es del pasado
+  const diaSelNormalizado = new Date(diaSeleccionado.getFullYear(), diaSeleccionado.getMonth(), diaSeleccionado.getDate());
+  const esDiaSeleccionadoPasado = diaSelNormalizado.getTime() < hoy.getTime();
 
   // Estadísticas del mes actual
   const stringMesActual = `${anyo}-${String(mes + 1).padStart(2, '0')}`;
@@ -80,6 +88,8 @@ export default function AgendaDiaria({
 
   const handleSubmitCita = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (esDiaSeleccionadoPasado) return; // Doble validación de seguridad
+    
     const exito = await agendarCita(
       fechaSeleccionadaString,
       horaNuevaCita,
@@ -92,9 +102,8 @@ export default function AgendaDiaria({
   };
 
   const handleEliminar = (cita: any) => {
-    if (
-      window.confirm(`¿Seguro que quieres cancelar la cita de ${cita.cliente}?`)
-    ) {
+    if (esDiaSeleccionadoPasado) return;
+    if (window.confirm(`¿Seguro que quieres cancelar la cita de ${cita.cliente}?`)) {
       eliminarCita(cita.id);
     }
   };
@@ -128,13 +137,13 @@ export default function AgendaDiaria({
             <div className="flex gap-2">
               <button
                 onClick={() => cambiarMes('prev')}
-                className="p-2 hover:bg-slate-100 rounded-lg border border-slate-200"
+                className="p-2 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
               >
                 <ChevronLeft className="w-5 h-5" />
               </button>
               <button
                 onClick={() => cambiarMes('next')}
-                className="p-2 hover:bg-slate-100 rounded-lg border border-slate-200"
+                className="p-2 hover:bg-slate-100 rounded-lg border border-slate-200 transition-colors"
               >
                 <ChevronRight className="w-5 h-5" />
               </button>
@@ -159,38 +168,49 @@ export default function AgendaDiaria({
             {Array.from({ length: diasEnMes }).map((_, i) => {
               const dia = i + 1;
               const f = new Date(anyo, mes, dia);
-              const fLocal = new Date(
-                f.getTime() - f.getTimezoneOffset() * 60000
-              )
-                .toISOString()
-                .split('T')[0];
-              const esSeleccionado =
-                diaSeleccionado.getDate() === dia &&
-                diaSeleccionado.getMonth() === mes;
+              const fLocal = new Date(f.getTime() - f.getTimezoneOffset() * 60000).toISOString().split('T')[0];
+              
+              const esSeleccionado = diaSeleccionado.getDate() === dia && diaSeleccionado.getMonth() === mes;
               const esCerrado = diasCerrados.includes(fLocal);
-              const numeroCitas = citas.filter(
-                (c: any) => c.fecha === fLocal
-              ).length;
+              const numeroCitas = citas.filter((c: any) => c.fecha === fLocal).length;
+              const esPasado = f.getTime() < hoy.getTime();
 
               return (
                 <button
                   key={`dia-${dia}`}
-                  onClick={() => setDiaSeleccionado(f)}
-                  className={`h-14 md:h-20 p-2 flex flex-col justify-between rounded-lg border text-left ${
-                    esSeleccionado
-                      ? 'border-indigo-600 ring-2 ring-indigo-100 bg-indigo-50/30'
-                      : 'border-slate-200 hover:border-slate-300 bg-white'
-                  } ${esCerrado ? 'opacity-50 bg-slate-100' : ''}`}
+                  onClick={() => {
+                    setDiaSeleccionado(f);
+                    setHoraNuevaCita(''); // Resetea el formulario si cambia de día
+                  }}
+                  className={`h-14 md:h-20 p-2 flex flex-col justify-between rounded-lg border text-left transition-colors
+                    ${esSeleccionado
+                        ? 'border-indigo-600 ring-2 ring-indigo-100 bg-indigo-50/30'
+                        : esPasado 
+                          ? 'border-slate-100 bg-slate-50/70 hover:bg-slate-100' // Estilo apagado para días pasados
+                          : 'border-slate-200 hover:border-slate-300 bg-white'
+                    }
+                    ${esCerrado ? 'opacity-50 bg-slate-100' : ''}
+                  `}
                 >
                   <span
-                    className={`text-sm font-semibold ${
-                      esSeleccionado ? 'text-indigo-600' : 'text-slate-700'
-                    } ${esCerrado ? 'line-through text-slate-400' : ''}`}
+                    className={`text-sm font-semibold
+                      ${esSeleccionado 
+                        ? 'text-indigo-600' 
+                        : esPasado 
+                          ? 'text-slate-400' 
+                          : 'text-slate-700'}
+                      ${esCerrado ? 'line-through text-slate-400' : ''}
+                    `}
                   >
                     {dia}
                   </span>
                   {numeroCitas > 0 && !esCerrado && (
-                    <span className="text-[10px] md:text-xs bg-emerald-100 text-emerald-800 font-medium px-1.5 py-0.5 rounded-md">
+                    <span className={`text-[10px] md:text-xs font-medium px-1.5 py-0.5 rounded-md
+                      ${esPasado 
+                        ? 'bg-slate-200 text-slate-500' // Citas pasadas en gris
+                        : 'bg-emerald-100 text-emerald-800' // Citas futuras en verde
+                      }`}
+                    >
                       {numeroCitas}
                     </span>
                   )}
@@ -205,7 +225,7 @@ export default function AgendaDiaria({
         <div className="border-b pb-4 mb-4 flex justify-between items-start">
           <div>
             <span className="text-xs uppercase font-semibold text-indigo-600">
-              Detalle del Día
+              {esDiaSeleccionadoPasado ? 'Historial del Día' : 'Detalle del Día'}
             </span>
             <h2 className="text-xl font-bold text-slate-900 mt-1">
               {diaSeleccionado.toLocaleDateString('es-ES', {
@@ -215,13 +235,19 @@ export default function AgendaDiaria({
               })}
             </h2>
           </div>
+          
+          {/* BOTÓN CERRAR DÍA: Deshabilitado si es pasado */}
           <button
-            onClick={() => toggleDiaCerrado(fechaSeleccionadaString)}
-            className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors ${
-              diaEstaCerrado
-                ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
-                : 'bg-rose-100 text-rose-700 hover:bg-rose-200'
-            }`}
+            onClick={() => !esDiaSeleccionadoPasado && toggleDiaCerrado(fechaSeleccionadaString)}
+            disabled={esDiaSeleccionadoPasado}
+            className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition-colors
+              ${esDiaSeleccionadoPasado
+                  ? 'bg-slate-100 text-slate-400 cursor-not-allowed'
+                  : diaEstaCerrado
+                    ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-200'
+                    : 'bg-rose-100 text-rose-700 hover:bg-rose-200'
+              }
+            `}
           >
             {diaEstaCerrado ? (
               'Reabrir Día'
@@ -242,7 +268,7 @@ export default function AgendaDiaria({
           </div>
         ) : (
           <>
-            {horaNuevaCita && (
+            {horaNuevaCita && !esDiaSeleccionadoPasado && (
               <form
                 onSubmit={handleSubmitCita}
                 className="bg-slate-50 p-3 rounded-lg border border-slate-200 mb-4 flex gap-2"
@@ -279,21 +305,23 @@ export default function AgendaDiaria({
                     key={hora}
                     className={`flex items-center justify-between p-3 rounded-xl border ${
                       cita
-                        ? 'bg-rose-50/50 border-rose-100'
+                        ? esDiaSeleccionadoPasado ? 'bg-slate-50 border-slate-200' : 'bg-rose-50/50 border-rose-100'
                         : 'bg-white border-slate-100'
                     }`}
                   >
                     <div className="flex items-center gap-3">
                       <span
                         className={`font-mono text-sm font-semibold ${
-                          cita ? 'text-rose-600' : 'text-slate-400'
+                          cita 
+                            ? esDiaSeleccionadoPasado ? 'text-slate-500' : 'text-rose-600' 
+                            : 'text-slate-400'
                         }`}
                       >
                         {hora}
                       </span>
                       {cita ? (
-                        <div className="flex items-center gap-1.5 text-sm font-medium text-rose-900">
-                          <User className="w-3.5 h-3.5 text-rose-500" />
+                        <div className={`flex items-center gap-1.5 text-sm font-medium ${esDiaSeleccionadoPasado ? 'text-slate-600' : 'text-rose-900'}`}>
+                          <User className={`w-3.5 h-3.5 ${esDiaSeleccionadoPasado ? 'text-slate-400' : 'text-rose-500'}`} />
                           {cita.cliente}
                         </div>
                       ) : (
@@ -302,20 +330,28 @@ export default function AgendaDiaria({
                         </span>
                       )}
                     </div>
+                    
+                    {/* BOTONES DE ACCIÓN: Ocultos si es un día pasado */}
                     {cita ? (
-                      <button
-                        onClick={() => handleEliminar(cita)}
-                        className="text-xs font-medium text-rose-500 hover:underline"
-                      >
-                        Cancelar
-                      </button>
+                      !esDiaSeleccionadoPasado && (
+                        <button
+                          onClick={() => handleEliminar(cita)}
+                          className="text-xs font-medium text-rose-500 hover:underline"
+                        >
+                          Cancelar
+                        </button>
+                      )
                     ) : (
-                      <button
-                        onClick={() => setHoraNuevaCita(hora)}
-                        className="flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1.5 rounded-lg"
-                      >
-                        <Plus className="w-3 h-3" /> Cita
-                      </button>
+                      !esDiaSeleccionadoPasado ? (
+                        <button
+                          onClick={() => setHoraNuevaCita(hora)}
+                          className="flex items-center gap-1 text-xs font-semibold text-indigo-600 bg-indigo-50 px-2.5 py-1.5 rounded-lg hover:bg-indigo-100 transition-colors"
+                        >
+                          <Plus className="w-3 h-3" /> Cita
+                        </button>
+                      ) : (
+                        <span className="text-xs text-slate-300 italic">No disponible</span>
+                      )
                     )}
                   </div>
                 );
