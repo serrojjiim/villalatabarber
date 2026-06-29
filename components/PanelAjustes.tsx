@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, DollarSign } from 'lucide-react';
+import { Settings, DollarSign, euro } from 'lucide-react';
 
 interface Ajustes {
   id? : number;
