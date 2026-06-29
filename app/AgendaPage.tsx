@@ -84,15 +84,19 @@ function AgendaPrincipal() {
             setAjustes={setAjustes}
             onGuardar={async () => {
               try {
-                // CORRECCIÓN: Quitamos el ID del objeto para evitar errores en Supabase
-                const { id, ...ajustesSinId } = ajustes;
                 const { error } = await supabase
                   .from('ajustes')
-                  .update(ajustesSinId)
-                  .eq('id', 1);
-
+                  .update({
+                    hora_apertura: ajustes.hora_apertura,
+                    hora_cierre: ajustes.hora_cierre,
+                    intervalo_minutos: ajustes.intervalo_minutos,
+                    precio_corte: ajustes.precio_corte
+                  })
+                  // Cambiamos el .eq('id', 1) por el ID de la sesión actual
+                  .eq('usuario_id', session.user.id);
+            
                 if (error) throw error;
-
+            
                 toast.success('Configuración guardada correctamente');
                 setMostrarAjustes(false);
               } catch (err) {
@@ -126,6 +130,16 @@ function AgendaPrincipal() {
           />
         )}
       </main>
+      <main className="max-w-7xl mx-auto">
+        {/* ... (todo el condicional de mostrarAjustes y AgendaDiaria) */}
+      </main>
+
+      {/* FOOTER AÑADIDO AQUÍ */}
+      <footer className="w-full text-center py-6 mt-8 border-t border-slate-200">
+        <p className="text-sm text-slate-500 font-medium">
+          © {new Date().getFullYear()} Desarrollado por Sergio Rojas. Todos los derechos reservados.
+        </p>
+      </footer>
     </div>
   );
 }
