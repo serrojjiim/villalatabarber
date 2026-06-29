@@ -2,6 +2,7 @@ import React from 'react';
 import { Settings, DollarSign } from 'lucide-react';
 
 interface Ajustes {
+  id? : number;
   hora_apertura: string;
   hora_cierre: string;
   intervalo_minutos: number;
