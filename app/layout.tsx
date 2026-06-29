@@ -1,5 +1,5 @@
 import './globals.css';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -8,21 +8,26 @@ export const metadata: Metadata = {
   title: 'VillaLata Barber',
   description: 'Agenda interna',
   manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'VillaLata Barber',
+    // Esto asegura que al abrir la app desde el icono, no salga la barra de Safari
+  },
+  // Si tienes un logo en public/logo.png, úsalo aquí para compartir
   openGraph: {
-    images: [
-      {
-        url: 'https://bolt.new/static/og_default.png',
-      },
-    ],
+    title: 'VillaLata Barber',
+    description: 'Agenda interna',
+    images: ['/logo.png'], 
   },
-  twitter: {
-    card: 'summary_large_image',
-    images: [
-      {
-        url: 'https://bolt.new/static/og_default.png',
-      },
-    ],
-  },
+};
+
+// Configuramos el color del tema aquí
+export const viewport: Viewport = {
+  themeColor: '#4f46e5',
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1, // Esto evita que el móvil haga zoom al tocar los inputs
 };
 
 export default function RootLayout({
@@ -31,7 +36,11 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="es">
+      <head>
+        {/* Favicon e iconos de Apple */}
+        <link rel="apple-touch-icon" href="/icon-192.png" />
+      </head>
       <body className={inter.className}>{children}</body>
     </html>
   );

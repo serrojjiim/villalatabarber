@@ -25,3 +25,24 @@ body {
     )
     rgb(var(--background-start-rgb));
 }
+
+input, select, textarea {
+  color: #1e293b !important; /* Slate-800 */
+  background-color: #ffffff !important; /* Blanco sólido */
+}
+
+/* 2. Corregir el color de texto del autocompletado de iOS/Chrome */
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+input:-webkit-autofill:active {
+  -webkit-text-fill-color: #1e293b !important;
+  -webkit-box-shadow: 0 0 0 30px white inset !important;
+  transition: background-color 5000s ease-in-out 0s;
+}
+
+/* 3. Desactivar la adaptación automática al modo oscuro para toda la app */
+/* Esto evita que el sistema operativo 'invierta' tus colores a la fuerza */
+:root {
+  color-scheme: light only;
+}
