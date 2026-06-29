@@ -78,11 +78,11 @@ export default function PanelAjustes({
         </div>
         <div>
           <label className="block text-sm font-medium text-slate-600 mb-1">
-            Precio base del Pelado (€)
+            Precio del pelado (€)
           </label>
           <div className="relative">
             <span className="absolute inset-y-0 left-0 pl-3 flex items-center text-slate-400">
-              <DollarSign className="w-4 h-4" />
+              <Euro className="w-4 h-4" />
             </span>
             <input
               type="number"

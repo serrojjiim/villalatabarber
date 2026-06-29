@@ -19,7 +19,7 @@ export default function Header({
           VillaLata Barber
         </h1>
         <p className="text-sm text-slate-500">
-          Gestión interna de turnos y citas
+          Gestión interna de citas
         </p>
       </div>
       <div className="flex gap-3">
